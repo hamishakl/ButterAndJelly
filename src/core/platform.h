@@ -85,6 +85,14 @@ void LogMemory(const char* when);
 void WarnIfMemoryLow(const char* where);
 #endif
 
+#if defined(_XENON)
+// True when the dashboard is set to a widescreen television. The console
+// scales whatever it is handed to the mode it is set to, so a 16:9 layout on
+// a 4:3 set arrives letterboxed at three quarters of the height, and the
+// picture inside that is smaller again. Asking lets the layout match the set.
+bool DisplayIsWidescreen();
+#endif
+
 // What the network link can be expected to carry in bits per second, or 0
 // when it is not a constraint. Only the Xbox 360 answers: its wireless
 // measures around 3.5 Mbit/s, under what a 720p transcode asks for.

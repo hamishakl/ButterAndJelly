@@ -197,6 +197,16 @@ uint32_t LinkBitrateCeiling()
     return g_wireless ? 3000000u : 0u;
 }
 
+// The mode the console is scaling to, which is what the picture lands in,
+// rather than anything about the frame the game hands over.
+bool DisplayIsWidescreen()
+{
+    XVIDEO_MODE mode;
+    memset(&mode, 0, sizeof(mode));
+    XGetVideoMode(&mode);
+    return mode.fIsWideScreen != FALSE;
+}
+
 void LogVideoCapabilities()
 {
     // Nothing to probe. The XDK's video decoder is XMV, meaning WMV9 and

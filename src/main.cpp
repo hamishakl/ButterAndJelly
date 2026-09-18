@@ -60,6 +60,13 @@ std::vector<Action> ParseKeyScript(const std::string& spec)
 constexpr int kLogicalWidth  = 1280;
 constexpr int kLogicalHeight = 720;
 
+#if defined(_XENON)
+// The same height in a 4:3 frame, for a console set to a standard television.
+// Laying out 16:9 there spends a quarter of the screen on letterboxing before
+// the picture is drawn at all.
+constexpr int kLogicalWidth43 = 960;
+#endif
+
 }  // namespace
 
 // C linkage, as SDL_main.h requires. Without it the CRT cannot find main by
@@ -145,6 +152,11 @@ extern "C" int main(int argc, char** argv)
 
     int windowW = kLogicalWidth;
     int windowH = kLogicalHeight;
+#if defined(_XENON)
+    // The 360 letterboxes a widescreen frame into a 4:3 set rather than the
+    // other way about, so match the set and the layout fills it.
+    if (!Platform::DisplayIsWidescreen()) windowW = kLogicalWidth43;
+#endif
 #if !defined(__WIIU__) && !defined(_XBOX)
     if (settings.windowWidth > 0 && settings.windowHeight > 0) {
         windowW = settings.windowWidth;
