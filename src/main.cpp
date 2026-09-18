@@ -55,17 +55,11 @@ std::vector<Action> ParseKeyScript(const std::string& spec)
     return out;
 }
 
-// The console outputs 720p; everything is laid out in these coordinates and
-// SDL scales to whatever the window actually is on a desktop.
-constexpr int kLogicalWidth  = 1280;
-constexpr int kLogicalHeight = 720;
-
-#if defined(_XENON)
-// The same height in a 4:3 frame, for a console set to a standard television.
-// Laying out 16:9 there spends a quarter of the screen on letterboxing before
-// the picture is drawn at all.
-constexpr int kLogicalWidth43 = 960;
-#endif
+// Everything is laid out in these coordinates and SDL scales to whatever the
+// window actually is on a desktop. A console that reports a 4:3 set narrows
+// the width; see Settings::layoutWidth.
+constexpr int kLogicalWidth  = kLayoutWidthWide;
+constexpr int kLogicalHeight = kLayoutHeight;
 
 }  // namespace
 
@@ -150,13 +144,10 @@ extern "C" int main(int argc, char** argv)
     if (settings.fullscreen) windowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 #endif
 
-    int windowW = kLogicalWidth;
+    // Off the 360 this is always the widescreen width; there the console is
+    // handed a frame whose shape it did not pick, so the setting decides.
+    int windowW = settings.layoutWidth();
     int windowH = kLogicalHeight;
-#if defined(_XENON)
-    // The 360 letterboxes a widescreen frame into a 4:3 set rather than the
-    // other way about, so match the set and the layout fills it.
-    if (!Platform::DisplayIsWidescreen()) windowW = kLogicalWidth43;
-#endif
 #if !defined(__WIIU__) && !defined(_XBOX)
     if (settings.windowWidth > 0 && settings.windowHeight > 0) {
         windowW = settings.windowWidth;

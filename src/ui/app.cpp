@@ -2128,12 +2128,28 @@ namespace {
   #define BJ_HAS_SECOND_SCREEN 0
 #endif
 
+// Only the 360 is handed a frame of a shape it did not choose.
+#if defined(_XENON)
+  #define BJ_HAS_SCREEN_SHAPE 1
+#else
+  #define BJ_HAS_SCREEN_SHAPE 0
+#endif
+
 
 // 0 is direct: the server sends what it has, with no re-encode.
 std::string QualityLabel(int height)
 {
     if (height <= 0) return "Direct";
     return bj::ToString(height) + "p";
+}
+
+const char* ScreenShapeLabel(Settings::ScreenShape shape)
+{
+    switch (shape) {
+        case Settings::ScreenShape::Widescreen: return "16:9";
+        case Settings::ScreenShape::Standard:   return "4:3";
+        default:                                return "automatic";
+    }
 }
 
 const char* DisplayLabel(Settings::Display display)
@@ -2145,6 +2161,27 @@ const char* DisplayLabel(Settings::Display display)
     }
 }
 }  // namespace
+
+// The 360 scales the frame it is handed to the mode the dashboard is set to,
+// so a widescreen layout on a 4:3 set arrives letterboxed and everything in
+// it shrinks. Narrowing the window to match the set costs nothing: the layout
+// reads its size back for itself, and the picture already fits itself to the area.
+// Nothing else is handed a frame of a shape it did not ask for, so nothing
+// else has anything to do here.
+void App::applyScreenShape()
+{
+#if BJ_HAS_SCREEN_SHAPE
+    if (!window_) return;
+    const int wanted = settings_.layoutWidth();
+    int width = 0, height = 0;
+    SDL_GetWindowSize(window_, &width, &height);
+    if (width == wanted) return;
+    SDL_SetWindowSize(window_, wanted, kLayoutHeight);
+    updateLayoutSize();
+    LOGF("[video] laying out %dx%d for a %s set",
+         logicalW_, logicalH_, ScreenShapeLabel(settings_.screenShape));
+#endif
+}
 
 void App::switchServer()
 {
@@ -2398,6 +2435,17 @@ void App::handleSettingsAction(Action action)
             applyStreamPrefs();
             break;
         }
+
+        case SettingAction::ScreenShape:
+            settings_.screenShape =
+                (settings_.screenShape == Settings::ScreenShape::Automatic)
+                    ? Settings::ScreenShape::Widescreen
+              : (settings_.screenShape == Settings::ScreenShape::Widescreen)
+                    ? Settings::ScreenShape::Standard
+                    : Settings::ScreenShape::Automatic;
+            settings_.save();
+            applyScreenShape();
+            break;
 
         case SettingAction::AudioFormat:
             // A build that decodes one format has nothing to choose between.
@@ -4311,6 +4359,11 @@ std::vector<App::SettingsEntry> App::settingsRows() const
     rows.push_back({ SettingAction::Framerate, "Frame rate",
                      FramerateLabel(settings_.maxFramerate),
                      "Change", false, -1 });
+#if BJ_HAS_SCREEN_SHAPE
+    rows.push_back({ SettingAction::ScreenShape, "Screen shape",
+                     ScreenShapeLabel(settings_.screenShape),
+                     "Change", false, -1 });
+#endif
 #if BJ_HAS_SECOND_SCREEN
     rows.push_back({ SettingAction::Display, "Screens",
                      DisplayLabel(settings_.display), "Change", false, -1 });

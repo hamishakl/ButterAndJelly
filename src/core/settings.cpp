@@ -69,6 +69,11 @@ void Settings::load()
                 : (format == "mp3") ? AudioFormat::Mp3
                                     : AudioFormat::Automatic;
 
+    const std::string shape = doc["screenShape"].asString("auto");
+    screenShape = (shape == "wide")     ? ScreenShape::Widescreen
+                : (shape == "standard") ? ScreenShape::Standard
+                                        : ScreenShape::Automatic;
+
     LOGF("[settings] display=%s, playback up to %dp",
          DisplayName(display), playbackHeight);
 }
@@ -83,6 +88,7 @@ void Settings::save() const
         "  \"fullscreen\": %d,\n  \"requestServerElsewhere\": %d,\n"
         "  \"videoBitrate\": %d,\n  \"maxFramerate\": %d,\n"
         "  \"audioFormat\": \"%s\",\n  \"audioBitrate\": %d,\n"
+        "  \"screenShape\": \"%s\",\n"
         "  \"diagnostics\": %d\n}\n",
         DisplayName(display), playbackHeight,
         windowWidth, windowHeight, fullscreen ? 1 : 0,
@@ -90,6 +96,28 @@ void Settings::save() const
         videoBitrate, maxFramerate,
         audioFormat == AudioFormat::Aac ? "aac"
       : audioFormat == AudioFormat::Mp3 ? "mp3" : "auto",
-        audioBitrate, diagnostics ? 1 : 0);
+        audioBitrate,
+        screenShape == ScreenShape::Widescreen ? "wide"
+      : screenShape == ScreenShape::Standard   ? "standard" : "auto",
+        diagnostics ? 1 : 0);
     std::fclose(fp);
+}
+
+// Only the 360 is given a frame whose shape it did not pick: the console
+// scales whatever it is handed to the mode the dashboard is set to, so a
+// widescreen layout on a 4:3 set arrives letterboxed. Everywhere else the
+// window is the shape it was asked for.
+int Settings::layoutWidth() const
+{
+#if defined(_XENON)
+    switch (screenShape) {
+        case ScreenShape::Widescreen: return kLayoutWidthWide;
+        case ScreenShape::Standard:   return kLayoutWidthStandard;
+        case ScreenShape::Automatic:  break;
+    }
+    return Platform::DisplayIsWidescreen() ? kLayoutWidthWide
+                                           : kLayoutWidthStandard;
+#else
+    return kLayoutWidthWide;
+#endif
 }

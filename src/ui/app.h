@@ -182,6 +182,8 @@ private:
     bool handleSidebarNav(Action action, bool canLeave);
     bool handleServiceTabs(Action action);
     void updateLayoutSize();
+    // Resizes the window to the chosen shape, where the platform has one.
+    void applyScreenShape();
     // Keeps the window size in settings so it comes back where it was left.
     void rememberWindowSize();
     void loadDiscover();
@@ -263,7 +265,7 @@ private:
         JellyfinServer, JellyfinAccount,
         RequestAlongside, RequestElsewhere,
         RequestAddress, RequestUser, RequestPassword, RequestTest, RequestSave,
-        Display, Playback, VideoBitrate, Framerate,
+        Display, Playback, VideoBitrate, Framerate, ScreenShape,
         AudioFormat, AudioBitrate,
         Diagnostics, DiagnosticsNote, About,
     };

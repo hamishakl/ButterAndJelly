@@ -9,6 +9,12 @@
 
 #include <string>
 
+// The interface lays itself out 720 tall. Only the width changes with the
+// shape of the television, and only the Xbox 360 has a choice to make.
+inline constexpr int kLayoutHeight        = 720;
+inline constexpr int kLayoutWidthWide     = 1280;
+inline constexpr int kLayoutWidthStandard = 960;
+
 struct Settings {
     // Which screens the app draws to. Only the Wii U has more than one.
     enum class Display { TvAndGamepad, TvOnly, GamepadOnly };
@@ -34,6 +40,12 @@ struct Settings {
     // Audio bitrate in kbit/s, for the transcoded case.
     int audioBitrate = 192;
 
+    // The shape of the television. Automatic follows the console's own
+    // setting, which is right until the dashboard disagrees with the set it
+    // is plugged into, and then there is no way to say so but this.
+    enum class ScreenShape { Automatic, Widescreen, Standard };
+    ScreenShape screenShape = ScreenShape::Automatic;
+
     // Keeps the per frame timing out of the log unless it is wanted.
     bool diagnostics = false;
 
@@ -45,6 +57,11 @@ struct Settings {
     int windowHeight = 0;
     bool fullscreen  = false;
 
+
+    // The width the interface should lay out in, for the shape chosen above.
+    // Always the widescreen one off the 360, which is the only console that
+    // is handed a frame of a different shape than it asked for.
+    int layoutWidth() const;
 
     void load();
     void save() const;
